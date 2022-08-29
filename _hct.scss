@@ -1,0 +1,746 @@
+//https://github.com/material-foundation/material-color-utilities/tree/main/typescript
+
+@use "./utils";
+@use "sass:map";
+@use "sass:math";
+@use "sass:color";
+
+//*from viewing_conditions.ts
+@function viewCondStructor($n, $aw, $nbb, $ncb, $c, $nc, $rgbD /*[]*/, $fl, $fLRoot, $z) {
+ @return (n: $n, aw: $aw, nbb: $nbb, ncb: $ncb, c: $c, nc: $nc, rgbD: $rgbD, fl: $fl, fLRoot: $fLRoot, z: $z);
+}
+
+@function viewCondMake(
+ $whitePoint: utils.whitePointD65(),
+ $adaptingLuminance: math.div(math.div(200, math.$pi) * utils.yFromLstar(50), 100),
+ $backgroundLstar: 50,
+ $surround: 2,
+ $discountingIlluminant: false
+) {
+ $xyz: $whitePoint;
+ $rW: nth($xyz, 1) * 0.401288 + nth($xyz, 2) * 0.650173 + nth($xyz, 3) * -0.051461;
+ $gW: nth($xyz, 1) * -0.250268 + nth($xyz, 2) * 1.204414 + nth($xyz, 3) * 0.045854;
+ $bW: nth($xyz, 1) * -0.002079 + nth($xyz, 2) * 0.048952 + nth($xyz, 3) * 0.953127;
+ $f: 0.8 + math.div($surround, 10);
+ $c: if($f >= 0.9, utils.lerp(0.59, 0.69, ($f - 0.9) * 10), utils.lerp(0.525, 0.59, ($f - 0.8) * 10));
+ $d: if($discountingIlluminant, 1, $f * (1 - math.div(1, 3.6) * utils.exp(math.div(-$adaptingLuminance - 42, 92))));
+ $d: if($d > 1, 1, if($d < 0, 0, $d));
+ $nc: $f;
+ $rgbD: ($d * math.div(100, $rW) + 1 - $d, $d * math.div(100, $gW) + 1 - $d, $d * math.div(100, $bW) + 1 - $d);
+ $k: math.div(1, 5 * $adaptingLuminance + 1);
+ $k4: $k * $k * $k * $k;
+ $k4F: 1 - $k4;
+ $fl: $k4 * $adaptingLuminance + 0.1 * $k4F * $k4F * utils.cbrt(5 * $adaptingLuminance);
+ $n: math.div(utils.yFromLstar($backgroundLstar), nth($whitePoint, 2));
+ $z: 1.48 + math.sqrt($n);
+ $nbb: math.div(0.725, math.pow($n, 0.2));
+ $ncb: $nbb;
+ $rgbAFactors: (
+  math.pow(math.div($fl * nth($rgbD, 1) * $rW, 100), 0.42),
+  math.pow(math.div($fl * nth($rgbD, 2) * $gW, 100), 0.42),
+  math.pow(math.div($fl * nth($rgbD, 3) * $bW, 100), 0.42)
+ );
+ $rgbA: (
+  math.div(400 * nth($rgbAFactors, 1), (nth($rgbAFactors, 1) + 27.13)),
+  math.div(400 * nth($rgbAFactors, 2), (nth($rgbAFactors, 2) + 27.13)),
+  math.div(400 * nth($rgbAFactors, 3), (nth($rgbAFactors, 3) + 27.13))
+ );
+ $aw: (2 * nth($rgbA, 1) + nth($rgbA, 2) + 0.05 * nth($rgbA, 3)) * $nbb;
+ @return viewCondStructor($n, $aw, $nbb, $ncb, $c, $nc, $rgbD, $fl, math.pow($fl, 0.25), $z);
+}
+
+$defaultViewingConditions: viewCondMake();
+//*from viewing_conditions.ts end--------------
+
+//*from cam16.ts.ts
+
+@function cam16Constructor($hue, $chroma, $j, $q, $m, $s, $jstar, $astar, $bstar) {
+ @return (hue: $hue, chroma: $chroma, j: $j, q: $q, m: $m, s: $s, jstar: $jstar, astar: $astar, bstar: $bstar);
+}
+
+@function fromIntInViewingConditions($rgba, $viewingConditions) {
+ $red: color.red($rgba);
+ $green: color.green($rgba);
+ $blue: color.blue($rgba);
+
+ $redL: utils.linearized($red);
+ $greenL: utils.linearized($green);
+ $blueL: utils.linearized($blue);
+
+ $x: 0.41233895 * $redL + 0.35762064 * $greenL + 0.18051042 * $blueL;
+ $y: 0.2126 * $redL + 0.7152 * $greenL + 0.0722 * $blueL;
+ $z: 0.01932141 * $redL + 0.11916382 * $greenL + 0.95034478 * $blueL;
+
+ $rC: 0.401288 * $x + 0.650173 * $y - 0.051461 * $z;
+ $gC: -0.250268 * $x + 1.204414 * $y + 0.045854 * $z;
+ $bC: -0.002079 * $x + 0.048952 * $y + 0.953127 * $z;
+
+ $rD: nth(map.get($viewingConditions, rgbD), 1) * $rC;
+ $gD: nth(map.get($viewingConditions, rgbD), 2) * $gC;
+ $bD: nth(map.get($viewingConditions, rgbD), 3) * $bC;
+
+ $rAF: math.pow(math.div((map.get($viewingConditions, fl) * math.abs($rD)), 100), 0.42);
+ $gAF: math.pow(math.div((map.get($viewingConditions, fl) * math.abs($gD)), 100), 0.42);
+ $bAF: math.pow(math.div((map.get($viewingConditions, fl) * math.abs($bD)), 100), 0.42);
+
+ $rA: math.div(utils.signum($rD) * 400 * $rAF, $rAF + 27.13);
+ $gA: math.div(utils.signum($gD) * 400 * $gAF, $gAF + 27.13);
+ $bA: math.div(utils.signum($bD) * 400 * $bAF, $bAF + 27.13);
+
+ $a: math.div(11 * $rA + (-12 * $gA) + $bA, 11);
+ $b: math.div($rA + $gA - 2 * $bA, 9);
+ $u: math.div(20 * $rA + 20 * $gA + 21 * $bA, 20);
+ $p2: math.div(40 * $rA + 20 * $gA + $bA, 20);
+ $atan2: utils.atan2($b, $a);
+ $atanDegrees: math.div($atan2 * 180, math.$pi);
+ $hue: if($atanDegrees < 0, $atanDegrees + 360, if($atanDegrees >= 360, $atanDegrees - 360, $atanDegrees));
+ $hueRadians: math.div($hue * math.$pi, 180);
+
+ $ac: $p2 * map.get($viewingConditions, nbb);
+ $j: 100 *
+  math.pow(
+   math.div($ac, map.get($viewingConditions, aw)),
+   map.get($viewingConditions, c) * map.get($viewingConditions, z)
+  );
+ $q: math.div(4, map.get($viewingConditions, c)) * math.sqrt(math.div($j, 100)) * (map.get($viewingConditions, aw) + 4) *
+  map.get($viewingConditions, fLRoot);
+ $huePrime: if($hue < 20.14, $hue + 360, $hue);
+ $eHue: 0.25 * (math.cos(math.div($huePrime * math.$pi, 180) + 2) + 3.8);
+ $p1: math.div(50000, 13) * $eHue * map.get($viewingConditions, nc) * map.get($viewingConditions, ncb);
+ $t: math.div(($p1 * math.sqrt($a * $a + $b * $b)), ($u + 0.305));
+ $alpha: math.pow($t, 0.9) * math.pow(1.64 - math.pow(0.29, map.get($viewingConditions, n)), 0.73);
+ $c: $alpha * math.sqrt(math.div($j, 100));
+ $m: $c * map.get($viewingConditions, fLRoot);
+ $s: 50 * math.sqrt(math.div($alpha * map.get($viewingConditions, c), map.get($viewingConditions, aw) + 4));
+ $jstar: math.div((1 + 100 * 0.007) * $j, 1 + 0.007 * $j);
+ $mstar: math.div(1, 0.0228) * math.log(1 + 0.0228 * $m);
+ $astar: $mstar * math.cos($hueRadians);
+ $bstar: $mstar * math.sin($hueRadians);
+
+ @return cam16Constructor($hue, $c, $j, $q, $m, $s, $jstar, $astar, $bstar);
+}
+
+@function camFromInt($rgba) {
+ @return fromIntInViewingConditions($rgba, $defaultViewingConditions);
+}
+
+@function camViewed($viewingConditions, $this /*cam16:fromInt()*/) {
+ $alpha: if(
+  map.get($this, chroma) == 0 or map.get($this, j) == 0,
+  0,
+  map.div(map.get($this, chroma), math.sqrt(math.div(map.get($this, j), 100)))
+ );
+
+ $t: math.pow(
+  math.div($alpha, math.pow(1.64 - math.pow(0.29, map.get($viewingConditions, n)), 0.73)),
+  math.div(1, 0.9)
+ );
+ $hRad: math.div((map.get($this, hue) * math.$pi), 180);
+
+ $eHue: 0.25 * (math.cos($hRad + 2) + 3.8);
+ $ac: map.get($viewingConditions, aw) *
+  math.pow(
+   math.div(map.get($this, j), 100),
+   math.div(math.div(1, map.get($viewingConditions, c)), map.get($viewingConditions, z))
+  );
+ $p1: $eHue * math.div(50000, 13) * map.get($viewingConditions, nc) * map.get($viewingConditions, ncb);
+ $p2: math.div($ac, map.get($viewingConditions, nbb));
+
+ $p2: math.sin($hRad);
+ $hCos: math.cos($hRad);
+
+ $gamma: math.div((23 * ($p2 + 0.305) * $hRad), (23 * $p1 + 11 * $hRad * $hCos + 108 * $hRad * $p2));
+ $a: $gamma * $hCos;
+ $b: $gamma * $p2;
+ $rA: math.div((460 * $p2 + 451 * $a + 288 * $b), 1403);
+ $gA: math.div((460 * $p2 - 891 * $a - 261 * $b), 1403);
+ $bA: math.div((460 * $p2 - 220 * $a - 6300 * $b), 1403);
+
+ $rCBase: math.max(0, math.div((27.13 * math.abs($rA)), (400 - math.abs($rA))));
+ $rC: math.utils($rA) * (math.div(100, map.get($viewingConditions, fl))) * math.pow($rCBase, math.div(1, 0.42));
+ $gCBase: math.max(0, math.div((27.13 * math.abs($gA)), (400 - math.abs($gA))));
+ $gC: math.utils($gA) * math.div(100, map.get($viewingConditions, fl)) * math.pow($gCBase, math.div(1, 0.42));
+ $bCBase: math.max(0, math.div((27.13 * math.abs($bA)), (400 - math.abs($bA))));
+ $bC: math.utils($bA) * math.div(100, map.get($viewingConditions, fl)) * math.pow($bCBase, 1 / 0.42);
+ $rF: math.div($rC, nth(map.get($viewingConditions, rgbD), 1));
+ $gF: math.div($gC, nth(map.get($viewingConditions, rgbD), 2));
+ $bF: math.div($bC, nth(map.get($viewingConditions, rgbD), 3));
+
+ $x: 1.86206786 * $rF - 1.01125463 * $gF + 0.14918677 * $bF;
+ $y: 0.38752654 * $rF + 0.62144744 * $gF - 0.00897398 * $bF;
+ $z: -0.0158415 * $rF - 0.03412294 * $gF + 1.04996444 * $bF;
+
+ $rgba: utils.rgbaFromXyz($x, $y, $z);
+ @return $rgba;
+}
+
+@function camToInt() {
+ @return camViewed($defaultViewingConditions);
+}
+
+//*from cam16.ts.ts* end-----------------------
+
+//*from hct_solver.ts
+$SCALED_DISCOUNT_FROM_LINRGB: (
+ (0.001200833568784504, 0.002389694492170889, 0.0002795742885861124),
+ (0.0005891086651375999, 0.0029785502573438758, 0.0003270666104008398),
+ (0.00010146692491640572, 0.0005364214359186694, 0.0032979401770712076)
+);
+
+$LINRGB_FROM_SCALED_DISCOUNT: (
+ (1373.2198709594231, -1100.4251190754821, -7.278681089101213),
+ (-271.815969077903, 559.6580465940733, -32.46047482791194),
+ (1.9622899599665666, -57.173814538844006, 308.7233197812385)
+);
+
+$Y_FROM_LINRGB: (0.2126, 0.7152, 0.0722);
+
+$CRITICAL_PLANES: (
+ 0.015176349177441876,
+ 0.045529047532325624,
+ 0.07588174588720938,
+ 0.10623444424209313,
+ 0.13658714259697685,
+ 0.16693984095186062,
+ 0.19729253930674434,
+ 0.2276452376616281,
+ 0.2579979360165119,
+ 0.28835063437139563,
+ 0.3188300904430532,
+ 0.350925934958123,
+ 0.3848314933096426,
+ 0.42057480301049466,
+ 0.458183274052838,
+ 0.4976837250274023,
+ 0.5391024159806381,
+ 0.5824650784040898,
+ 0.6277969426914107,
+ 0.6751227633498623,
+ 0.7244668422128921,
+ 0.775853049866786,
+ 0.829304845476233,
+ 0.8848452951698498,
+ 0.942497089126609,
+ 1.0022825574869039,
+ 1.0642236851973577,
+ 1.1283421258858297,
+ 1.1946592148522128,
+ 1.2631959812511864,
+ 1.3339731595349034,
+ 1.407011200216447,
+ 1.4823302800086415,
+ 1.5599503113873272,
+ 1.6398909516233677,
+ 1.7221716113234105,
+ 1.8068114625156377,
+ 1.8938294463134073,
+ 1.9832442801866852,
+ 2.075074464868551,
+ 2.1693382909216234,
+ 2.2660538449872063,
+ 2.36523901573795,
+ 2.4669114995532007,
+ 2.5710888059345764,
+ 2.6777882626779785,
+ 2.7870270208169257,
+ 2.898822059350997,
+ 3.0131901897720907,
+ 3.1301480604002863,
+ 3.2497121605402226,
+ 3.3718988244681087,
+ 3.4967242352587946,
+ 3.624204428461639,
+ 3.754355295633311,
+ 3.887192587735158,
+ 4.022731918402185,
+ 4.160988767090289,
+ 4.301978482107941,
+ 4.445716283538092,
+ 4.592217266055746,
+ 4.741496401646282,
+ 4.893568542229298,
+ 5.048448422192488,
+ 5.20615066083972,
+ 5.3666897647573375,
+ 5.5300801301023865,
+ 5.696336044816294,
+ 5.865471690767354,
+ 6.037501145825082,
+ 6.212438385869475,
+ 6.390297286737924,
+ 6.571091626112461,
+ 6.7548350853498045,
+ 6.941541251256611,
+ 7.131223617812143,
+ 7.323895587840543,
+ 7.5195704746346665,
+ 7.7182615035334345,
+ 7.919981813454504,
+ 8.124744458384042,
+ 8.332562408825165,
+ 8.543448553206703,
+ 8.757415699253682,
+ 8.974476575321063,
+ 9.194643831691977,
+ 9.417930041841839,
+ 9.644347703669503,
+ 9.873909240696694,
+ 10.106627003236781,
+ 10.342513269534024,
+ 10.58158024687427,
+ 10.8238400726681,
+ 11.069304815507364,
+ 11.317986476196008,
+ 11.569896988756009,
+ 11.825048221409341,
+ 12.083451977536606,
+ 12.345119996613247,
+ 12.610063955123938,
+ 12.878295467455942,
+ 13.149826086772048,
+ 13.42466730586372,
+ 13.702830557985108,
+ 13.984327217668513,
+ 14.269168601521828,
+ 14.55736596900856,
+ 14.848930523210871,
+ 15.143873411576273,
+ 15.44220572664832,
+ 15.743938506781891,
+ 16.04908273684337,
+ 16.35764934889634,
+ 16.66964922287304,
+ 16.985093187232053,
+ 17.30399201960269,
+ 17.62635644741625,
+ 17.95219714852476,
+ 18.281524751807332,
+ 18.614349837764564,
+ 18.95068293910138,
+ 19.290534541298456,
+ 19.633915083172692,
+ 19.98083495742689,
+ 20.331304511189067,
+ 20.685334046541502,
+ 21.042933821039977,
+ 21.404114048223256,
+ 21.76888489811322,
+ 22.137256497705877,
+ 22.50923893145328,
+ 22.884842241736916,
+ 23.264076429332462,
+ 23.6469514538663,
+ 24.033477234264016,
+ 24.42366364919083,
+ 24.817520537484558,
+ 25.21505769858089,
+ 25.61628489293138,
+ 26.021211842414342,
+ 26.429848230738664,
+ 26.842203703840827,
+ 27.258287870275353,
+ 27.678110301598522,
+ 28.10168053274597,
+ 28.529008062403893,
+ 28.96010235337422,
+ 29.39497283293396,
+ 29.83362889318845,
+ 30.276079891419332,
+ 30.722335150426627,
+ 31.172403958865512,
+ 31.62629557157785,
+ 32.08401920991837,
+ 32.54558406207592,
+ 33.010999283389665,
+ 33.4802739966603,
+ 33.953417292456834,
+ 34.430438229418264,
+ 34.911345834551085,
+ 35.39614910352207,
+ 35.88485700094671,
+ 36.37747846067349,
+ 36.87402238606382,
+ 37.37449765026789,
+ 37.87891309649659,
+ 38.38727753828926,
+ 38.89959975977785,
+ 39.41588851594697,
+ 39.93615253289054,
+ 40.460400508064545,
+ 40.98864111053629,
+ 41.520882981230194,
+ 42.05713473317016,
+ 42.597404951718396,
+ 43.141702194811224,
+ 43.6900349931913,
+ 44.24241185063697,
+ 44.798841244188324,
+ 45.35933162437017,
+ 45.92389141541209,
+ 46.49252901546552,
+ 47.065252796817916,
+ 47.64207110610409,
+ 48.22299226451468,
+ 48.808024568002054,
+ 49.3971762874833,
+ 49.9904556690408,
+ 50.587870934119984,
+ 51.189430279724725,
+ 51.79514187861014,
+ 52.40501387947288,
+ 53.0190544071392,
+ 53.637271562750364,
+ 54.259673423945976,
+ 54.88626804504493,
+ 55.517063457223934,
+ 56.15206766869424,
+ 56.79128866487574,
+ 57.43473440856916,
+ 58.08241284012621,
+ 58.734331877617365,
+ 59.39049941699807,
+ 60.05092333227251,
+ 60.715611475655585,
+ 61.38457167773311,
+ 62.057811747619894,
+ 62.7353394731159,
+ 63.417162620860914,
+ 64.10328893648692,
+ 64.79372614476921,
+ 65.48848194977529,
+ 66.18756403501224,
+ 66.89098006357258,
+ 67.59873767827808,
+ 68.31084450182222,
+ 69.02730813691093,
+ 69.74813616640164,
+ 70.47333615344107,
+ 71.20291564160104,
+ 71.93688215501312,
+ 72.67524319850172,
+ 73.41800625771542,
+ 74.16517879925733,
+ 74.9167682708136,
+ 75.67278210128072,
+ 76.43322770089146,
+ 77.1981124613393,
+ 77.96744375590167,
+ 78.74122893956174,
+ 79.51947534912904,
+ 80.30219030335869,
+ 81.08938110306934,
+ 81.88105503125999,
+ 82.67721935322541,
+ 83.4778813166706,
+ 84.28304815182372,
+ 85.09272707154808,
+ 85.90692527145302,
+ 86.72564993000343,
+ 87.54890820862819,
+ 88.3767072518277,
+ 89.2090541872801,
+ 90.04595612594655,
+ 90.88742016217518,
+ 91.73345337380438,
+ 92.58406282226491,
+ 93.43925555268066,
+ 94.29903859396902,
+ 95.16341895893969,
+ 96.03240364439274,
+ 96.9059996312159,
+ 97.78421388448044,
+ 98.6670533535366,
+ 99.55452497210776
+);
+
+@function HctSolverConstructor() {
+}
+
+@function inverseChromaticAdaptation($adapted) {
+ $adaptedAbs: math.abs($adapted);
+ $base: math.max(0, math.div(27.13 * $adaptedAbs, 400 - $adaptedAbs));
+ @return utils.signum($adapted) * math.pow($base, math.div(1, 0.42));
+}
+
+@function findResultByJ($hueRadians, $chroma, $y) {
+ $j: math.sqrt($y) * 11;
+ $viewingConditions: $defaultViewingConditions;
+ $tInnerCoeff: math.div(1, math.pow(1.64 - math.pow(0.29, map.get($viewingConditions, n)), 0.73));
+ $eHue: 0.25 * (math.cos($hueRadians + 2) + 3.8);
+ $p1: $eHue * math.div(50000, 13) * map.get($viewingConditions, nc) * map.get($viewingConditions, ncb);
+ $hSin: math.sin($hueRadians);
+ $hCos: math.cos($hueRadians);
+
+ @for $iterationRound from 0 through 4 {
+  $jNormalized: math.div($j, 100);
+  $alpha: if($chroma == 0 or $j == 0, 0, math.div($chroma, math.sqrt($jNormalized)));
+  $t: math.pow($alpha * $tInnerCoeff, math.div(1, 0.9));
+  $ac: map.get($viewingConditions, aw) *
+   math.pow($jNormalized, math.div(math.div(1, map.get($viewingConditions, c)), map.get($viewingConditions, z)));
+  $p2: math.div($ac, map.get($viewingConditions, nbb));
+  $gamma: math.div(23 * ($p2 + 0.305) * $t, (23 * $p1 + 11 * $t * $hCos + 108 * $t * $hSin));
+  $a: $gamma * $hCos;
+  $b: $gamma * $hSin;
+  $rA: math.div(460 * $p2 + 451 * $a + 288 * $b, 1403);
+  $gA: math.div(460 * $p2 - 891 * $a - 261 * $b, 1403);
+  $bA: math.div(460 * $p2 - 220 * $a - 6300 * $b, 1403);
+  $rCScaled: inverseChromaticAdaptation($rA);
+  $gCScaled: inverseChromaticAdaptation($gA);
+  $bCScaled: inverseChromaticAdaptation($bA);
+  $linrgb: utils.matrixMultiply(($rCScaled, $gCScaled, $bCScaled), $LINRGB_FROM_SCALED_DISCOUNT);
+
+  @if (nth($linrgb, 1) < 0 or nth($linrgb, 2) < 0 or nth($linrgb, 3) < 0) {
+   @return 0;
+  }
+  $kR: nth($Y_FROM_LINRGB, 1);
+  $kG: nth($Y_FROM_LINRGB, 2);
+  $kB: nth($Y_FROM_LINRGB, 3);
+  $fnj: $kR * nth($linrgb, 1) + $kG * nth($linrgb, 2) + $kB * nth($linrgb, 3);
+
+  @if ($fnj <= 0) {
+   @return 0;
+  }
+  @if ($iterationRound == 4 or math.abs($fnj - $y) < 0.002) {
+   @if (nth($linrgb, 1) > 100.01 or nth($linrgb, 2) > 100.01 or nth($linrgb, 3) > 100.01) {
+    @return 0;
+   }
+   @return utils.rgbaFromLinrgb($linrgb);
+  }
+  // Iterates with Newton method,
+  // Using 2 * fn(j) / j as the approximation of fn'(j)
+  $j: $j - math.div(($fnj - $y) * $j, 2 * $fnj);
+ }
+ @return 0;
+}
+
+@function criticalPlaneAbove($x) {
+ @return math.ceil($x - 0.5);
+}
+
+@function criticalPlaneBelow($x) {
+ @return math.floor($x - 0.5);
+}
+
+@function trueDelinearized($rgbComponent) {
+ $normalized: math.div($rgbComponent, 100);
+ $delinearized: 0;
+ @if ($normalized <= 0.0031308) {
+  $delinearized: $normalized * 12.92;
+ } @else {
+  $delinearized: 1.055 * math.pow($normalized, math.div(1, 2.4)) - 0.055;
+ }
+ @return $delinearized * 255;
+}
+
+@function intercept($source, $mid, $target) {
+ @return math.div($mid - $source, $target - $source);
+}
+
+@function lerpPoint($source /*: number[]*/, $t, $target /*: number[]*/) /*:number[]*/ {
+ @return (
+  nth($source, 1) + (nth($target, 1) - nth($source, 1)) * $t,
+  nth($source, 2) + (nth($target, 2) - nth($source, 2)) * $t,
+  nth($source, 3) + (nth($target, 3) - nth($source, 3)) * $t
+ );
+}
+
+@function setCoordinate($source /*: number[]*/, $coordinate /*: number*/, $target /*: number[]*/, $axis /*: number*/)
+ /*: number[]*/ {
+ $t: intercept(nth($source, $axis), $coordinate, nth($target, $axis));
+ @return lerpPoint($source, $t, $target);
+}
+
+@function chromaticAdaptation($component) {
+ $af: math.pow(math.abs($component), 0.42);
+ @return math.div(utils.signum($component) * 400 * $af, $af + 27.13);
+}
+
+@function hueOf($linrgb /*: number[]*/) /*: number*/ {
+ $scaledDiscount: utils.matrixMultiply($linrgb, $SCALED_DISCOUNT_FROM_LINRGB);
+ $rA: chromaticAdaptation(nth($scaledDiscount, 1));
+ $gA: chromaticAdaptation(nth($scaledDiscount, 2));
+ $bA: chromaticAdaptation(nth($scaledDiscount, 3));
+ // redness-greenness
+ $a: math.div(11 * $rA + (-12 * $gA) + $bA, 11);
+ // yellowness-blueness
+ $b: math.div(($rA + $gA - 2 * $bA), 9);
+ @return utils.atan2($b, $a);
+}
+
+@function sanitizeRadians($angle) {
+ @return ($angle + math.$pi * 8) % (math.$pi * 2);
+}
+
+@function areInCyclicOrder($a, $b, $c) /*: boolean*/ {
+ $deltaAB: sanitizeRadians($b - $a);
+ $deltaAC: sanitizeRadians($c - $a);
+ @return $deltaAB < $deltaAC;
+}
+
+@function isBounded($x) {
+ @return 0 <= $x and $x <= 100;
+}
+
+@function nthVertex($y, $n) /*: number[]*/ {
+ $kR: nth($Y_FROM_LINRGB, 1);
+ $kG: nth($Y_FROM_LINRGB, 2);
+ $kB: nth($Y_FROM_LINRGB, 3);
+ $coordA: if($n % 4 <= 1, 0, 100);
+ $coordB: if($n % 2 == 0, 0, 100);
+ @if ($n < 4) {
+  $g: $coordA;
+  $b: $coordB;
+  $r: math.div(($y - $g * $kG - $b * $kB), $kR);
+  @if (isBounded($r)) {
+   @return ($r, $g, $b);
+  } @else {
+   @return (-1, -1, -1);
+  }
+ } @else if ($n < 8) {
+  $b: $coordA;
+  $r: $coordB;
+  $g: math.div(($y - $r * $kR - $b * $kB), $kG);
+  @if (isBounded($g)) {
+   @return ($r, $g, $b);
+  } @else {
+   @return (-1, -1, -1);
+  }
+ } @else {
+  $r: $coordA;
+  $g: $coordB;
+  $b: math.div(($y - $r * $kR - $g * $kG), $kB);
+  @if (isBounded($b)) {
+   @return ($r, $g, $b);
+  } @else {
+   @return (-1, -1, -1);
+  }
+ }
+}
+
+@function bisectToSegment($y, $targetHue) /*: number[][]*/ {
+ $left: (-1, -1, -1);
+ $right: $left;
+ $leftHue: 0;
+ $rightHue: 0;
+ $initialized: false;
+ $uncut: true;
+
+ @for $n from 0 through 11 {
+  $mid: nthVertex($y, $n);
+
+  @if (nth($mid, 1) < 0) {
+  } @else {
+   $midHue: hueOf($mid);
+   @if (not $initialized) {
+    $left: $mid;
+    $right: $mid;
+    $leftHue: $midHue;
+    $rightHue: $midHue;
+    $initialized: true;
+   } @else if ($uncut or areInCyclicOrder($leftHue, $midHue, $rightHue)) {
+    $uncut: false;
+    @if (areInCyclicOrder($leftHue, $targetHue, $midHue)) {
+     $right: $mid;
+     $rightHue: $midHue;
+    } @else {
+     $left: $mid;
+     $leftHue: $midHue;
+    }
+   }
+  }
+ }
+
+ @return ($left, $right);
+}
+
+@function midpoint($a /*: number[]*/, $b /*: number[]*/) /*: number[]*/ {
+ @return (
+  math.div((nth($a, 1) + nth($b, 1)), 2),
+  math.div((nth($a, 2) + nth($b, 2)), 2),
+  math.div((nth($a, 3) + nth($b, 3)), 2)
+ );
+}
+
+@function bisectToLimit($y, $targetHue) /*list*/ {
+ $segment: bisectToSegment($y, $targetHue);
+ $left: nth($segment, 1); //list
+ $leftHue: hueOf($left);
+ $right: nth($segment, 2); //list
+ @for $axis from 1 to 4 {
+  @if (nth($left, $axis) != nth($right, $axis)) {
+   $lPlane: -1;
+   $rPlane: 255;
+   @if (nth($left, $axis) < nth($right, $axis)) {
+    $lPlane: criticalPlaneBelow(trueDelinearized(nth($left, $axis)));
+    $rPlane: criticalPlaneAbove(trueDelinearized(nth($right, $axis)));
+   } @else {
+    $lPlane: criticalPlaneAbove(trueDelinearized(nth($left, $axis)));
+    $rPlane: criticalPlaneBelow(trueDelinearized(nth($right, $axis)));
+   }
+   @for $i from 0 through 7 {
+    @if (math.abs($rPlane - $lPlane) <= 1) {
+     $i: 9;
+    } @else {
+     $mPlane: math.floor(math.div(($lPlane + $rPlane), 2));
+     $midPlaneCoordinate: nth($CRITICAL_PLANES, $mPlane + 1);
+     $mid: setCoordinate($left, $midPlaneCoordinate, $right, $axis);
+     $midHue: hueOf($mid);
+     @if (areInCyclicOrder($leftHue, $targetHue, $midHue)) {
+      $right: $mid;
+      $rPlane: $mPlane;
+     } @else {
+      $left: $mid;
+      $leftHue: $midHue;
+      $lPlane: $mPlane;
+     }
+    }
+   }
+  }
+ }
+ @return midpoint($left, $right);
+}
+
+@function solveToInt($hueDegrees, $chroma, $lstar) {
+ @if ($chroma < 0.0001 or $lstar < 0.0001 or $lstar > 99.9999) {
+  @return utils.rgbaFromLstar($lstar);
+ }
+ $hueDegrees: utils.sanitizeDegreesDouble($hueDegrees);
+ $hueRadians: math.div($hueDegrees, 180) * math.$pi;
+ $y: utils.yFromLstar($lstar);
+
+ $exactAnswer: findResultByJ($hueRadians, $chroma, $y);
+ @if ($exactAnswer != 0) {
+  @return $exactAnswer;
+ }
+ $linrgb: bisectToLimit($y, $hueRadians);
+ @return utils.rgbaFromLinrgb($linrgb);
+}
+
+//*from hct_solver.ts end---------------------
+
+//*from hct.ts
+@function hctConstructor(/*private */ $rgba) {
+ $cam: camFromInt($rgba);
+ @return (
+  internalHue: map.get($cam, hue),
+  internalChroma: map.get($cam, chroma),
+  internalTone: utils.lstarFromRgba($rgba),
+  rgba: $rgba
+ );
+}
+
+@function hctFrom($hue, $chroma, $tone) {
+ $rgba: solveToInt($hue, $chroma, $tone);
+ @return hctConstructor($rgba);
+}
+
+@function hctFromInt($rgba) {
+ $hct: hctConstructor($rgba);
+ $rgba: solveToInt(map.get($hct, internalHue), map.get($hct, internalChroma), map.get($hct, internalTone));
+ @return $hct;
+}
+
+@function hctToInt($hct) {
+ @return map.get($hct, rgba);
+}
+//*from hct.ts end--------------------

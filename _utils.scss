@@ -1,0 +1,237 @@
+@use "sass:math";
+@use "sass:color";
+@use "sass:map";
+@use "sass:meta";
+
+@function whitePointD65() {
+ @return $WHITE_POINT_D65;
+}
+
+@function labInvf($ft /*: number*/) {
+ $e: math.div(216, 24389);
+ $kappa: math.div(24389, 27);
+ $ft3: $ft * $ft * $ft;
+
+ @if ($ft3 > $e) {
+  @return $ft3;
+ } @else {
+  @return math.div(116 * $ft - 16, $kappa);
+ }
+}
+
+@function yFromLstar($lstar /*: number*/) {
+ @return 100 * labInvf(math.div($lstar + 16, 116));
+}
+
+@function lerp($start /*: number*/, $stop /*: number*/, $amount /*: number*/) {
+ @return (1 - $amount) * $start + $amount * $stop;
+}
+
+@function exp($p) {
+ @return math.pow(math.$e, $p);
+}
+
+@function cbrt($p) {
+ @return math.pow($p, math.div(1, 3));
+}
+
+@function linearized($rgbComponent) {
+ $normalized: math.div($rgbComponent, 255);
+ @if $normalized <= 0.040449936 {
+  @return math.div($normalized, 12.92) * 100;
+ } @else {
+  @return math.pow(math.div($normalized + 0.055, 1.055), 2.4) * 100;
+ }
+}
+
+@function signum($num) {
+ @if ($num < 0) {
+  @return -1;
+ } @else if ($num == 0) {
+  @return 0;
+ } @else {
+  @return 1;
+ }
+}
+
+$SRGB_TO_XYZ: (
+ 0: (
+  0: 0.41233895,
+  1: 0.35762064,
+  2: 0.18051042,
+ ),
+ 1: (
+  0: 0.2126,
+  1: 0.7152,
+  2: 0.0722,
+ ),
+ 2: (
+  0: 0.01932141,
+  1: 0.11916382,
+  2: 0.95034478,
+ ),
+);
+
+$XYZ_TO_SRGB: (
+ 0: (
+  0: 3.2413774792388685,
+  1: -1.5376652402851851,
+  2: -0.49885366846268053,
+ ),
+ 1: (
+  0: -0.9691452513005321,
+  1: 1.8758853451067872,
+  2: 0.04156585616912061,
+ ),
+ 2: (
+  0: 0.05562093689691305,
+  1: -0.20395524564742123,
+  2: 1.0571799111220335,
+ ),
+);
+
+$WHITE_POINT_D65: 95.047, 100, 108.883;
+
+@function delinearized($rgbComponent) {
+ $normalized: math.div($rgbComponent, 100);
+ $_delinearized: 0;
+ @if ($normalized <= 0.0031308) {
+  $_delinearized: $normalized * 12.92;
+ } @else {
+  $_delinearized: 1.055 * math.pow($normalized, math.div(1, 2.4)) - 0.055;
+ }
+ @return math.clamp(0, 255, math.round($_delinearized * 255));
+}
+
+@function toHexStr($decimal) {
+ $hexBase: "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F";
+ $hexStr: "";
+ @while $decimal > 0 {
+  $reminder: $decimal % 16;
+  $decimal: math.floor(math.div($decimal, 16));
+  $hexStr: nth($hexBase, $reminder + 1) + $hexStr;
+ }
+ @return $hexStr;
+}
+
+@function rgbaToHexStr($rgba) {
+ $red: color.red($rgba);
+ $green: color.green($rgba);
+ $blue: color.blue($rgba);
+
+ $dec: ($red) * math.pow(2, 16) + ($green) * math.pow(2, 8) + $blue; /* math.pow(2, 8) + 255*/
+ $hexStr: toHexStr($dec);
+ @while str-length($hexStr) < 6 {
+  $hexStr: "0" + $hexStr;
+ }
+
+ @return #{"#" + $hexStr};
+}
+
+@function rgbaToInt($rgba) {
+ $red: color.red($rgba);
+ $green: color.green($rgba);
+ $blue: color.blue($rgba);
+
+ $colorInt: 255 * math.pow(2, 24) + ($red) * math.pow(2, 16) + ($green) * math.pow(2, 8) + $blue;
+ @return $colorInt;
+}
+
+@function rgbaFromRgb($red, $green, $blue) {
+ /*$dec: ($red) * math.pow(2, 16) + ($green) * math.pow(2, 8) + $blue  math.pow(2, 8) + 255*/
+ /*$hexStr: toHexStr($dec);
+ @while str-length($hexStr) < 6 {
+  $hexStr: "0" + $hexStr;
+ }*/
+
+ @return rgb($red, $green, $blue);
+ //@return #{"#000000"};
+ //328965
+}
+
+@function colorIntFromRgb($red, $green, $blue) {
+ $colorInt: ($red) * math.pow(2, 16) + ($green) * math.pow(2, 8) + $blue;
+ @return $colorInt;
+}
+
+@function rgbaFromXyz($x, $y, $z) {
+ $matrix: $XYZ_TO_SRGB;
+ $linearR: map.get($matrix, 0, 0) * $x + map.get($matrix, 0, 1) * $y + map.get($matrix, 0, 2) * $z;
+ $linearG: map.get($matrix, 1, 0) * $x + map.get($matrix, 1, 1) * $y + map.get($matrix, 1, 2) * $z;
+ $linearB: map.get($matrix, 2, 0) * $x + map.get($matrix, 2, 1) * $y + map.get($matrix, 2, 2) * $z;
+ $r: delinearized($linearR);
+ $g: delinearized($linearG);
+ $b: delinearized($linearB);
+ @return rgbaFromRgb($r, $g, $b);
+}
+
+@function rgbaFromLstar($lstar) {
+ $y: yFromLstar($lstar);
+ $component: delinearized($y);
+ @return rgbaFromRgb($component, $component, $component);
+}
+
+@function sanitizeDegreesDouble($degrees) {
+ $degrees: $degrees % 360;
+ @if ($degrees < 0) {
+  $degrees: $degrees + 360;
+ }
+ @return $degrees;
+}
+
+@function rgbaFromLinrgb($linrgb /*list*/) {
+ $r: delinearized(nth($linrgb, 1));
+ $g: delinearized(nth($linrgb, 2));
+ $b: delinearized(nth($linrgb, 3));
+ @return rgbaFromRgb($r, $g, $b);
+}
+
+@function matrixMultiply($row, $matrix /*lsit[list]*/) {
+ $a: nth($row, 1) * nth(nth($matrix, 1), 1) + nth($row, 2) * nth(nth($matrix, 1), 2) + nth($row, 3) *
+  nth(nth($matrix, 1), 3);
+ $b: nth($row, 1) * nth(nth($matrix, 2), 1) + nth($row, 2) * nth(nth($matrix, 2), 2) + nth($row, 3) *
+  nth(nth($matrix, 2), 3);
+ $c: nth($row, 1) * nth(nth($matrix, 3), 1) + nth($row, 2) * nth(nth($matrix, 3), 2) + nth($row, 3) *
+  nth(nth($matrix, 3), 3);
+
+ @return ($a, $b, $c);
+}
+
+@function matrixMultiplyOfMap($row, $matrix /*map*/) {
+ $a: map.get($matrix, 0, 0) * nth($row, 1) + map.get($matrix, 0, 1) * nth($row, 2) + map.get($matrix, 0, 2) *
+  nth($row, 3);
+ $b: map.get($matrix, 1, 0) * nth($row, 1) + map.get($matrix, 1, 1) * nth($row, 2) + map.get($matrix, 1, 2) *
+  nth($row, 3);
+ $c: map.get($matrix, 2, 0) * nth($row, 1) + map.get($matrix, 2, 1) * nth($row, 2) + map.get($matrix, 2, 2) *
+  nth($row, 3);
+
+ @return ($a, $b, $c);
+}
+
+@function xyzFromRgba($rgba) /*: number[]*/ {
+ $r: linearized(color.red($rgba));
+ $g: linearized(color.green($rgba));
+ $b: linearized(color.blue($rgba));
+ @return matrixMultiplyOfMap(($r, $g, $b), $SRGB_TO_XYZ);
+}
+
+@function labF($t) {
+ $e: math.div(216, 24389);
+ $kappa: math.div(24389, 27);
+ @if ($t > $e) {
+  @return math.pow($t, math.div(1, 3));
+ } @else {
+  @return math.div(($kappa * $t + 16), 116);
+ }
+}
+
+@function lstarFromRgba($rgba) {
+ $y: nth(xyzFromRgba($rgba), 2);
+ @return 116 * labF(math.div($y, 100)) - 16;
+}
+
+@function atan2($b, $a) {
+ $deg: math.div(math.atan2($b, $a) * math.$pi, 180);
+ //@debug(str-length($deg));
+ @return math.div($deg, 1deg);
+}

@@ -1,0 +1,3 @@
+@use "../theming";
+$color: #fa2becff;
+@include theming.define-light-theme($color);

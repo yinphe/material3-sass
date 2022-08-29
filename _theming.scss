@@ -1,0 +1,168 @@
+@use "sass:map";
+@use "./palettes";
+
+@mixin define-light-theme($color) {
+  @include ref-token($color);
+
+  :root {
+    --yte-color-primary: var(--yte-ref-palette-primary40);
+    --yte-color-on-primary: var(--yte-ref-palette-primary100);
+    --yte-color-primary-container: var(--yte-ref-palette-primary90);
+    --yte-color-on-primary-container: var(--yte-ref-palette-primary10);
+    --yte-color-secondary: var(--yte-ref-palette-secondary40);
+    --yte-color-on-secondary: var(--yte-ref-palette-secondary100);
+    --yte-color-secondary-container: var(--yte-ref-palette-secondary90);
+    --yte-color-on-secondary-container: var(--yte-ref-palette-secondary10);
+    --yte-color-tertiary: var(--yte-ref-palette-tertiary40);
+    --yte-color-on-tertiary: var(--yte-ref-palette-tertiary100);
+    --yte-color-tertiary-container: var(--yte-ref-palette-tertiary90);
+    --yte-color-on-tertiary-container: var(--yte-ref-palette-tertiary10);
+    --yte-color-error: var(--yte-ref-palette-error40);
+    --yte-color-on-error: var(--yte-ref-palette-error100);
+    --yte-color-error-container: var(--yte-ref-palette-error90);
+    --yte-color-on-error-container: var(--yte-ref-palette-error10);
+    --yte-color-background: var(--yte-ref-palette-neutral99);
+    --yte-color-on-background: var(--yte-ref-palette-neutral10);
+    --yte-color-surface: var(--yte-ref-palette-neutral99);
+    --yte-color-on-surface: var(--yte-ref-palette-neutral10);
+    --yte-color-surface-variant: var(--yte-ref-palette-neutral-variant90);
+    --yte-color-on-surface-variant: var(--yte-ref-palette-neutral-variant30);
+    --yte-color-outline: var(--yte-ref-palette-neutral-variant50);
+    --yte-color-outline-variant: var(--yte-ref-palette-neutral-variant80);
+    --yte-color-shadow: var(--yte-ref-palette-neutral0);
+    --yte-color-scrim: var(--yte-ref-palette-neutral0);
+    --yte-color-inverse-surface: var(--yte-ref-palette-neutral20);
+    --yte-color-inverse-on-surface: var(--yte-ref-palette-neutral95);
+    --yte-color-inverse-primary: var(--yte-ref-palette-primary80);
+  }
+}
+
+@mixin define-dark-theme($color) {
+  @include ref-token($color);
+  :root {
+    --yte-color-primary: var(--yte-ref-palette-primary80);
+    --yte-color-on-primary: var(--yte-ref-palette-primary20);
+    --yte-color-primary-container: var(--yte-ref-palette-primary30);
+    --yte-color-on-primary-container: var(--yte-ref-palette-primary90);
+    --yte-color-secondary: var(--yte-ref-palette-secondary80);
+    --yte-color-on-secondary: var(--yte-ref-palette-secondary20);
+    --yte-color-secondary-container: var(--yte-ref-palette-secondary30);
+    --yte-color-on-secondary-container: var(--yte-ref-palette-secondary90);
+    --yte-color-tertiary: var(--yte-ref-palette-tertiary80);
+    --yte-color-on-tertiary: var(--yte-ref-palette-tertiary20);
+    --yte-color-tertiary-container: var(--yte-ref-palette-tertiary30);
+    --yte-color-on-tertiary-container: var(--yte-ref-palette-tertiary90);
+    --yte-color-error: var(--yte-ref-palette-error80);
+    --yte-color-on-error: var(--yte-ref-palette-error20);
+    --yte-color-error-container: var(--yte-ref-palette-error30);
+    --yte-color-on-error-container: var(--yte-ref-palette-error80);
+    --yte-color-background: var(--yte-ref-palette-neutral10);
+    --yte-color-on-background: var(--yte-ref-palette-neutral90);
+    --yte-color-surface: var(--yte-ref-palette-neutral10);
+    --yte-color-on-surface: var(--yte-ref-palette-neutral90);
+    --yte-color-surface-variant: var(--yte-ref-palette-neutral-variant30);
+    --yte-color-on-surface-variant: var(--yte-ref-palette-neutral-variant80);
+    --yte-color-outline: var(--yte-ref-palette-neutral-variant60);
+    --yte-color-outline-variant: var(--yte-ref-palette-neutral-variant30);
+    --yte-color-shadow: var(--yte-ref-palette-neutral0);
+    --yte-color-scrim: var(--yte-ref-palette-neutral0);
+    --yte-color-inverse-surface: var(--yte-ref-palette-neutral90);
+    --yte-color-inverse-on-surface: var(--yte-ref-palette-neutral20);
+    --yte-color-inverse-primary: var(--yte-ref-palette-primary40);
+  }
+}
+
+@mixin define-font-theme() {
+}
+
+@mixin ref-token($color) {
+  $coreP: palettes.coreOf($color);
+  :root {
+    --yte-source: #{$color};
+    /* error */
+    --yte-ref-palette-error0: #{palettes.getTone(0, map.get($coreP, error))};
+    --yte-ref-palette-error10: #{palettes.getTone(10, map.get($coreP, error))};
+    --yte-ref-palette-error20: #{palettes.getTone(20, map.get($coreP, error))};
+    --yte-ref-palette-error30: #{palettes.getTone(30, map.get($coreP, error))};
+    --yte-ref-palette-error40: #{palettes.getTone(40, map.get($coreP, error))};
+    --yte-ref-palette-error50: #{palettes.getTone(50, map.get($coreP, error))};
+    --yte-ref-palette-error60: #{palettes.getTone(60, map.get($coreP, error))};
+    --yte-ref-palette-error70: #{palettes.getTone(70, map.get($coreP, error))};
+    --yte-ref-palette-error80: #{palettes.getTone(80, map.get($coreP, error))};
+    --yte-ref-palette-error90: #{palettes.getTone(90, map.get($coreP, error))};
+    --yte-ref-palette-error95: #{palettes.getTone(95, map.get($coreP, error))};
+    --yte-ref-palette-error99: #{palettes.getTone(99, map.get($coreP, error))};
+    --yte-ref-palette-error100: #{palettes.getTone(100, map.get($coreP, error))};
+    /* primary */
+    --yte-ref-palette-primary0: #{palettes.getTone(0, map.get($coreP, a1))};
+    --yte-ref-palette-primary10: #{palettes.getTone(10, map.get($coreP, a1))};
+    --yte-ref-palette-primary20: #{palettes.getTone(20, map.get($coreP, a1))};
+    --yte-ref-palette-primary30: #{palettes.getTone(30, map.get($coreP, a1))};
+    --yte-ref-palette-primary40: #{palettes.getTone(40, map.get($coreP, a1))};
+    --yte-ref-palette-primary50: #{palettes.getTone(50, map.get($coreP, a1))};
+    --yte-ref-palette-primary60: #{palettes.getTone(60, map.get($coreP, a1))};
+    --yte-ref-palette-primary70: #{palettes.getTone(70, map.get($coreP, a1))};
+    --yte-ref-palette-primary80: #{palettes.getTone(80, map.get($coreP, a1))};
+    --yte-ref-palette-primary90: #{palettes.getTone(90, map.get($coreP, a1))};
+    --yte-ref-palette-primary95: #{palettes.getTone(95, map.get($coreP, a1))};
+    --yte-ref-palette-primary99: #{palettes.getTone(99, map.get($coreP, a1))};
+    --yte-ref-palette-primary100: #{palettes.getTone(100, map.get($coreP, a1))};
+    /* secondary */
+    --yte-ref-palette-secondary0: #{palettes.getTone(0, map.get($coreP, a2))};
+    --yte-ref-palette-secondary10: #{palettes.getTone(10, map.get($coreP, a2))};
+    --yte-ref-palette-secondary20: #{palettes.getTone(20, map.get($coreP, a2))};
+    --yte-ref-palette-secondary30: #{palettes.getTone(30, map.get($coreP, a2))};
+    --yte-ref-palette-secondary40: #{palettes.getTone(40, map.get($coreP, a2))};
+    --yte-ref-palette-secondary50: #{palettes.getTone(50, map.get($coreP, a2))};
+    --yte-ref-palette-secondary60: #{palettes.getTone(60, map.get($coreP, a2))};
+    --yte-ref-palette-secondary70: #{palettes.getTone(70, map.get($coreP, a2))};
+    --yte-ref-palette-secondary80: #{palettes.getTone(80, map.get($coreP, a2))};
+    --yte-ref-palette-secondary90: #{palettes.getTone(90, map.get($coreP, a2))};
+    --yte-ref-palette-secondary95: #{palettes.getTone(95, map.get($coreP, a2))};
+    --yte-ref-palette-secondary99: #{palettes.getTone(99, map.get($coreP, a2))};
+    --yte-ref-palette-secondary100: #{palettes.getTone(100, map.get($coreP, a2))};
+    /* tertiary */
+    --yte-ref-palette-tertiary0: #{palettes.getTone(0, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary10: #{palettes.getTone(10, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary20: #{palettes.getTone(20, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary30: #{palettes.getTone(30, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary40: #{palettes.getTone(40, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary50: #{palettes.getTone(50, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary60: #{palettes.getTone(60, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary70: #{palettes.getTone(70, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary80: #{palettes.getTone(80, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary90: #{palettes.getTone(90, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary95: #{palettes.getTone(95, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary99: #{palettes.getTone(99, map.get($coreP, a3))};
+    --yte-ref-palette-tertiary100: #{palettes.getTone(100, map.get($coreP, a3))};
+    /* neutral */
+    --yte-ref-palette-neutral0: #{palettes.getTone(0, map.get($coreP, n1))};
+    --yte-ref-palette-neutral10: #{palettes.getTone(10, map.get($coreP, n1))};
+    --yte-ref-palette-neutral20: #{palettes.getTone(20, map.get($coreP, n1))};
+    --yte-ref-palette-neutral30: #{palettes.getTone(30, map.get($coreP, n1))};
+    --yte-ref-palette-neutral40: #{palettes.getTone(40, map.get($coreP, n1))};
+    --yte-ref-palette-neutral50: #{palettes.getTone(50, map.get($coreP, n1))};
+    --yte-ref-palette-neutral60: #{palettes.getTone(60, map.get($coreP, n1))};
+    --yte-ref-palette-neutral70: #{palettes.getTone(70, map.get($coreP, n1))};
+    --yte-ref-palette-neutral80: #{palettes.getTone(80, map.get($coreP, n1))};
+    --yte-ref-palette-neutral90: #{palettes.getTone(90, map.get($coreP, n1))};
+    --yte-ref-palette-neutral95: #{palettes.getTone(95, map.get($coreP, n1))};
+    --yte-ref-palette-neutral99: #{palettes.getTone(99, map.get($coreP, n1))};
+    --yte-ref-palette-neutral100: #{palettes.getTone(100, map.get($coreP, n1))};
+    /* neutral-variant */
+    --yte-ref-palette-neutral-variant0: #{palettes.getTone(0, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant10: #{palettes.getTone(10, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant20: #{palettes.getTone(20, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant30: #{palettes.getTone(30, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant40: #{palettes.getTone(40, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant50: #{palettes.getTone(50, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant60: #{palettes.getTone(60, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant70: #{palettes.getTone(70, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant80: #{palettes.getTone(80, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant90: #{palettes.getTone(90, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant95: #{palettes.getTone(95, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant99: #{palettes.getTone(99, map.get($coreP, n2))};
+    --yte-ref-palette-neutral-variant100: #{palettes.getTone(100, map.get($coreP, n2))};
+  }
+}
+

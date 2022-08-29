@@ -1,0 +1,73 @@
+@use "./hct";
+@use "./utils";
+@use "sass:map";
+@use "sass:math";
+
+//*from tonal_palette.ts
+
+$toneCache: ();
+
+@function toneConstructor($hue, $chroma) {
+ @return (hue: $hue, chroma: $chroma);
+}
+
+@function toneFromInt($rgba) {
+ $hct: hct.hctFromInt($rgba);
+ @return toneConstructor(map.get($hct, hue), map.get($hct, chroma));
+}
+
+@function toneFromHueAndChroma($hue, $chroma) {
+ @return toneConstructor($hue, $chroma);
+}
+
+@function getTone($tone, $this) {
+ //$rgba: map.get($this, cache, $tone);
+ //@if (not $rgba) {
+ $rgba: hct.hctToInt(hct.hctFrom(map.get($this, hue), map.get($this, chroma), $tone));
+ //@debug map.set($this, cache, $tone, $rgba);
+ //@return map.get($this, cache, $tone)
+ //}
+
+ @return utils.rgbaToHexStr($rgba);
+}
+
+//*from tonal_palette.ts end-------------------
+
+//*from core_palette.ts
+
+@function coreConstructor($rgba, $isContent) {
+ $hct: hct.hctFromInt($rgba);
+ $hue: map.get($hct, internalHue);
+ $chroma: map.get($hct, internalChroma);
+ @if ($isContent) {
+  //@debug ("isContent");
+  @return (
+   a1: toneFromHueAndChroma($hue, $chroma),
+   a2: toneFromHueAndChroma($hue, math.div($chroma, 3)),
+   a3: toneFromHueAndChroma($hue + 60, math.div($chroma, 2)),
+   n1: toneFromHueAndChroma($hue, math.min(math.div($chroma, 12), 4)),
+   n2: toneFromHueAndChroma($hue, math.min(math.div($chroma, 6), 8)),
+   error: toneFromHueAndChroma(25, 84)
+  );
+ } @else {
+  //@debug ("notContent");
+  @return (
+   a1: toneFromHueAndChroma($hue, math.max(48, $chroma)),
+   a2: toneFromHueAndChroma($hue, 16),
+   a3: toneFromHueAndChroma($hue + 60, 24),
+   n1: toneFromHueAndChroma($hue, 4),
+   n2: toneFromHueAndChroma($hue, 8),
+   error: toneFromHueAndChroma(25, 84)
+  );
+ }
+}
+
+@function coreOf($rgba) {
+ @return coreConstructor($rgba, false);
+}
+
+@function coreContentOf($rgba) {
+ @return coreConstructor($rgba, 1);
+}
+
+//*from cor_palette.ts end--------------

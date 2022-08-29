@@ -1,0 +1,77 @@
+@use "./palettes";
+
+@function light($rgba) {
+ @return schemeLightFromCorePalette(palettes.coreOf($rgba));
+}
+
+@function dark($rgba) {
+ @return schemeDarkFromCorePalette(palettes.coreOf($rgba));
+}
+
+@function schemeLightFromCorePalette($coreP) {
+ @return (
+  primary: palettes.getTone(40, map.get($coreP, a1)),
+  onPrimary: palettes.getTone(100, map.get($coreP, a1)),
+  primaryContainer: palettes.getTone(90, map.get($coreP, a1)),
+  onPrimaryContainer: palettes.getTone(10, map.get($coreP, a1)),
+  secondary: palettes.getTone(40, map.get($coreP, a2)),
+  onSecondary: palettes.getTone(100, map.get($coreP, a2)),
+  secondaryContainer: palettes.getTone(90, map.get($coreP, a2)),
+  onSecondaryContainer: palettes.getTone(10, map.get($coreP, a2)),
+  tertiary: palettes.getTone(40, map.get($coreP, a3)),
+  onTertiary: palettes.getTone(100, map.get($coreP, a3)),
+  tertiaryContainer: palettes.getTone(90, map.get($coreP, a3)),
+  onTertiaryContainer: palettes.getTone(10, map.get($coreP, a3)),
+  error: palettes.getTone(40, map.get($coreP, error)),
+  onError: palettes.getTone(100, map.get($coreP, error)),
+  errorContainer: palettes.getTone(90, map.get($coreP, error)),
+  onErrorContainer: palettes.getTone(10, map.get($coreP, error)),
+  background: palettes.getTone(99, map.get($coreP, n1)),
+  onBackground: palettes.getTone(10, map.get($coreP, n1)),
+  surface: palettes.getTone(99, map.get($coreP, n1)),
+  onSurface: palettes.getTone(10, map.get($coreP, n1)),
+  surfaceVariant: palettes.getTone(90, map.get($coreP, n2)),
+  onSurfaceVariant: palettes.getTone(30, map.get($coreP, n2)),
+  outline: palettes.getTone(50, map.get($coreP, n2)),
+  outlineVariant: palettes.getTone(80, map.get($coreP, n2)),
+  shadow: palettes.getTone(0, map.get($coreP, n1)),
+  scrim: palettes.getTone(0, map.get($coreP, n1)),
+  inverseSurface: palettes.getTone(20, map.get($coreP, n1)),
+  inverseOnSurface: palettes.getTone(95, map.get($coreP, n1)),
+  inversePrimary: palettes.getTone(80, map.get($coreP, a1))
+ );
+}
+
+@function schemeDarkFromCorePalette($coreP) {
+ @return (
+  primary: palettes.getTone(80, map.get($coreP, a1)),
+  onPrimary: palettes.getTone(20, map.get($coreP, a1)),
+  primaryContainer: palettes.getTone(30, map.get($coreP, a1)),
+  onPrimaryContainer: palettes.getTone(90, map.get($coreP, a1)),
+  secondary: palettes.getTone(80, map.get($coreP, a2)),
+  onSecondary: palettes.getTone(20, map.get($coreP, a2)),
+  secondaryContainer: palettes.getTone(30, map.get($coreP, a2)),
+  onSecondaryContainer: palettes.getTone(90, map.get($coreP, a2)),
+  tertiary: palettes.getTone(80, map.get($coreP, a3)),
+  onTertiary: palettes.getTone(20, map.get($coreP, a3)),
+  tertiaryContainer: palettes.getTone(30, map.get($coreP, a3)),
+  onTertiaryContainer: palettes.getTone(90, map.get($coreP, a3)),
+  error: palettes.getTone(80, map.get($coreP, error)),
+  onError: palettes.getTone(20, map.get($coreP, error)),
+  errorContainer: palettes.getTone(30, map.get($coreP, error)),
+  onErrorContainer: palettes.getTone(80, map.get($coreP, error)),
+  background: palettes.getTone(10, map.get($coreP, n1)),
+  onBackground: palettes.getTone(90, map.get($coreP, n1)),
+  surface: palettes.getTone(10, map.get($coreP, n1)),
+  onSurface: palettes.getTone(90, map.get($coreP, n1)),
+  surfaceVariant: palettes.getTone(30, map.get($coreP, n2)),
+  onSurfaceVariant: palettes.getTone(80, map.get($coreP, n2)),
+  outline: palettes.getTone(60, map.get($coreP, n2)),
+  outlineVariant: palettes.getTone(30, map.get($coreP, n2)),
+  shadow: palettes.getTone(0, map.get($coreP, n1)),
+  scrim: palettes.getTone(0, map.get($coreP, n1)),
+  inverseSurface: palettes.getTone(90, map.get($coreP, n1)),
+  inverseOnSurface: palettes.getTone(20, map.get($coreP, n1)),
+  inversePrimary: palettes.getTone(40, map.get($coreP, a1))
+ );
+}
